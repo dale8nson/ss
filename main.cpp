@@ -24,7 +24,7 @@ void cb(char *buf, WS *ws)
 {
   extern void free(void*);
 
-  Template *tmp = new Template("template.xhtml");
+  Template *tmp = new Template("template.html");
   tmp->load();
   
   const char *pattern = "(?<=/)\\w+?(?=\\s)";

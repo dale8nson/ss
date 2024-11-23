@@ -9,7 +9,8 @@ extern "C" {
     char *fmt;
 
     public:
-    Template(const char *fn): filename{fn} {}
+    Template(const char *fn): filename{fn}, fmt {new char[0]} {}
+    ~Template();
     void load();
     char *interpolate(...);
   };
