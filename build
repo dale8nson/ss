@@ -1,0 +1,2 @@
+#!sh 
+gcc -std=c++23 -I/opt/homebrew/include -L/opt/homebrew/lib  -o ss -lc++ -lcurl -lpcre2-8 main.cpp WS.cpp Template.cpp
