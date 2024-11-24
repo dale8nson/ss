@@ -6,12 +6,14 @@ extern "C" {
     private:
     const char *filename;
     FILE *file;
+    void load();
     char *fmt;
+    void **args;
+    char *txt;
 
     public:
-    Template(const char *fn): filename{fn}, fmt {new char[0]} {}
+    Template(const char *fn, ...);
     ~Template();
-    void load();
-    char *interpolate(...);
+    char *text(){ return this->txt; };
   };
 }
