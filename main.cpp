@@ -21,6 +21,11 @@ extern "C"
   void cb(char *buf, WS *ws);
   class WS;
 
+  void ss_cb(char *buf, WS *ws)
+  {
+    printf("buffer received from ss:\n\n%s\n\n", buf);
+  }
+
   void cb(char *buf, WS *ws)
   {
     extern void free(void *);
@@ -57,6 +62,10 @@ extern "C"
     ws->init(3170);
     ws->listen(cb);
 
+
+
+    ws->await();
+    delete ws;
     return 0;
   }
 
