@@ -38,16 +38,16 @@ extern "C"
 
     char *header = (char *)calloc(1024, sizeof(char));
     snprintf(header, 1024, fheader, strlen(tmp->text()));
-    char *response = (char *)calloc(2048, sizeof(char));
+    char *httpResponse = (char *)calloc(2048, sizeof(char));
 
-    strcat(response, header);
-    strcat(response, tmp->text());
+    strcat(httpResponse, header);
+    strcat(httpResponse, tmp->text());
 
-    printf("%s\n", response);
+    printf("%s\n", httpResponse);
 
-    ws->send(response);
+    ws->send(httpResponse);
 
-    free(response);
+    free(httpResponse);
     free(match);
   }
 
