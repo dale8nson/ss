@@ -12,12 +12,13 @@
 #include <pcre2.h>
 #include "WS.h"
 #include "Template.h"
+#include "utils.h"
 
 typedef void (*CB)(char *, WS *ws);
 
 extern "C"
 {
-  char *reMatch(const char *, char *);
+  // char *reMatch(const char *, char *);
   void cb(char *buf, WS *ws);
   class WS;
 
@@ -32,7 +33,7 @@ extern "C"
 
     const char *pattern = "(?<=/)\\w+?(?=\\s)";
 
-    char *match = reMatch(pattern, buf);
+    char *match = Utils::reMatch(pattern,(const char *) buf);
 
     printf("ovector: %s\n", match);
 
@@ -59,45 +60,50 @@ extern "C"
   int main(int argc, char *argv[])
   {
     WS *ws = new WS();
-    ws->init(3170);
+    ws->setPort(3170);
+    ws->init();
     ws->listen(cb);
 
-
+    WS *finSock = new WS();
+    finSock->setPort(53);
+    // finSock->init(R"(wss://ws.finnhub.io?token=csmi481r01qn12jet16gcsmi481r01qn12jet170)");
+    finSock->init(R"(http://google.com)");
 
     ws->await();
     delete ws;
+    delete finSock;
     return 0;
   }
 
-  char *reMatch(const char *pattern, char *subject)
-  {
+  // char *reMatch(const char *pattern, char *subject)
+  // {
 
-    int errorcode;
-    PCRE2_SIZE erroroffset;
+  //   int errorcode;
+  //   PCRE2_SIZE erroroffset;
 
-    pcre2_code *code = pcre2_compile((PCRE2_SPTR)pattern, PCRE2_ZERO_TERMINATED, 0, &errorcode, &erroroffset, NULL);
-    if (code == NULL)
-    {
-      puts("compile error");
-    }
+  //   pcre2_code *code = pcre2_compile((PCRE2_SPTR)pattern, PCRE2_ZERO_TERMINATED, 0, &errorcode, &erroroffset, NULL);
+  //   if (code == NULL)
+  //   {
+  //     puts("compile error");
+  //   }
 
-    pcre2_match_data *data = pcre2_match_data_create_from_pattern(code, NULL);
+  //   pcre2_match_data *data = pcre2_match_data_create_from_pattern(code, NULL);
 
-    int err = pcre2_match(code, (PCRE2_SPTR)subject, strlen(subject), 0, 0, data, NULL);
+  //   int err = pcre2_match(code, (PCRE2_SPTR)subject, strlen(subject), 0, 0, data, NULL);
 
-    PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(data);
+  //   PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(data);
 
-    int match_length = ovector[1] - ovector[0];
+  //   int match_length = ovector[1] - ovector[0];
 
-    char *match = (char *)calloc(match_length, sizeof(char));
+  //   char *match = (char *)calloc(match_length, sizeof(char));
 
-    int i;
-    for (i = 0; i < match_length; i++)
-    {
-      match[i] = subject[ovector[0] + i];
-    }
-    match[i] = '\0';
+  //   int i;
+  //   for (i = 0; i < match_length; i++)
+  //   {
+  //     match[i] = subject[ovector[0] + i];
+  //   }
+  //   match[i] = '\0';
 
-    return match;
-  }
+  //   return match;
+  // }
 }

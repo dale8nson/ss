@@ -1,2 +1,6 @@
 #!sh 
-gcc -std=c++23 -I/opt/homebrew/include -L/opt/homebrew/lib  -o ss -lc++ -lcurl -lpcre2-8 main.cpp WS.cpp Template.cpp
+gcc -std=c++23 -I/opt/homebrew/include -L/opt/homebrew/lib  -o ss -lc++ -lcurl -lpcre2-8 -lresolv main.cpp WS.cpp utils.cpp Template.cpp
+
+
+
+# -I/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/include -L/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/lib/system
