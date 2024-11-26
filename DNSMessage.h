@@ -1,4 +1,5 @@
 #include <cstdint>
+#include "WS.h"
 extern "C"
 {
   typedef struct
@@ -11,7 +12,7 @@ extern "C"
     uint8_t *RDATA;
   } DNSAnswer;
 
-  class DNSMessage
+  class DNSQuery
   {
   private:
     uint16_t id;
@@ -36,12 +37,17 @@ extern "C"
     uint16_t RDLENGTH;
     uint8_t *RDATA;
     DNSAnswer *ANSWERS;
+    size_t dstIPCount;
+    char **dst_ipv4s;
+    uint32_t **dst_addrs;
 
     char *_buf;
     DNSAnswer *_answers;
 
   public:
-    DNSMessage(char *buf);
-    ~DNSMessage();
+    DNSQuery(const char *url);
+    ~DNSQuery();
+    char **destinationIPs() { return dst_ipv4s; }
+    uint32_t **destinationAddresses() { return dst_addrs; }
   };
 }

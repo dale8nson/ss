@@ -3,46 +3,6 @@
 
 extern "C"
 {
-  typedef struct {
-    char *NAME;
-    uint16_t TYPE;
-    uint16_t CLASS;
-    uint32_t TTL;
-    uint16_t RDLENGTH;
-    uint8_t *RDATA;
-  } DNSAnswer;
-
-  typedef struct
-  {
-    uint16_t id;
-    unsigned int QR;
-    unsigned int OPCODE;
-    unsigned int AA;
-    unsigned int TC;
-    unsigned int RD;
-    unsigned int RA;
-    unsigned int Z;
-    unsigned int RCODE;
-    uint16_t QDCOUNT;
-    uint16_t ANCOUNT;
-    uint16_t NSCOUNT;
-    uint16_t ARCOUNT;
-    char *NAME;
-    uint16_t QTYPE;
-    uint16_t QCLASS;
-    uint16_t TYPE;
-    uint16_t CLASS;
-    uint32_t TTL;
-    uint16_t RDLENGTH;
-    uint8_t *RDATA;
-    DNSAnswer *ANSWERS;
-
-  } DNSMessage;
-
-  
-
-  class WS;
-  typedef void (*CB)(char *buf, WS *ws);
 
   class WS
   {
@@ -69,5 +29,6 @@ extern "C"
     void send(char *msg);
     void setPort(long port) { this->port = port; }
     long getPort(void) { return this->port; }
+    struct sockaddr_in getAddress() { return this->address; }
   };
 }
