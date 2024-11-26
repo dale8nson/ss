@@ -42,24 +42,24 @@ extern "C"
 
   char *Utils::parseDNSName(char *buf, size_t *offset)
   {
-    char *name = (char *) calloc(128, sizeof(char));
+    char *name = (char *)calloc(128, sizeof(char));
     uint8_t len = buf[*offset];
-
+    uint8_t k = 0;
     while (buf[(*offset)++] != '\0')
     {
+      // printf("len: %u\n", len);
       char label[len];
-      size_t j;
+      uint8_t j;
+
       for (j = 0; j < len; j++)
-        label[j] = buf[*offset + j];
+        name[k++] = buf[*offset + j];
       *offset += len;
       strcat(name, label);
       if (buf[*offset] != '\0')
-      {
-        name[strlen(name)] = '.';
-        name[strlen(name) + 1] = '\0';
-      }
+        name[k++] = '.';
       len = buf[*offset];
     }
+    name[k] = '\0';
     return name;
   }
 }

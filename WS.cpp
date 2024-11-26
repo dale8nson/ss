@@ -62,8 +62,12 @@ extern "C"
     return NULL;
   }
 
-  WS::WS() {}
-  WS::~WS() {}
+  WS::WS() : dstIPCount{0} {}
+  WS::~WS()
+  {
+    delete this->dst_ipv4s;
+    delete this->dst_addrs;
+  }
 
   void WS::init()
   {
@@ -93,6 +97,7 @@ extern "C"
 
   void WS::init(const char *url)
   {
+    const char *digits = "0123456789";
 
     this->address.sin_family = AF_INET;
     this->address.sin_port = htons(this->port);
@@ -111,7 +116,7 @@ extern "C"
 
     res->id = (buf[0] << 8) | buf[1];
     res->QR = buf[2] >> 7;
-    res->op = (buf[2] >> 3) & 7;
+    res->OPCODE = (buf[2] >> 3) & 7;
     res->AA = (buf[2] >> 2) & 1;
     res->TC = (buf[2] >> 1) & 1;
     res->RD = buf[2] & 1;
@@ -122,10 +127,10 @@ extern "C"
     res->NSCOUNT = (buf[8] << 8) | buf[9];
     res->ARCOUNT = (buf[10] << 8) | buf[11];
 
-    puts("----HEADER----\n");
+    puts("----HEADER----");
     printf("id: %hu\n", res->id);
     printf("QR: %u\n", res->QR);
-    printf("op: %u\n", res->op);
+    printf("op: %u\n", res->OPCODE);
     printf("AA: %u\n", res->AA);
     printf("TC: %u\n", res->TC);
     printf("RD: %u\n", res->RD);
@@ -136,7 +141,7 @@ extern "C"
     printf("NSCOUNT: %hu\n", res->NSCOUNT);
     printf("ARCOUNT: %hu\n", res->ARCOUNT);
 
-    puts("\n\n----QUESTION----\n");
+    puts("\n\n----QUESTION----");
     size_t i = 12;
     uint8_t len = buf[i];
     res->NAME = Utils::parseDNSName(buf, &i);
@@ -147,36 +152,105 @@ extern "C"
     printf("QTYPE: %hu\n", res->QTYPE);
     printf("QCLASS: %hu\n", res->QCLASS);
 
-    puts("\n\n----ANSWER----\n");
-    free(res->NAME);
-    res->NAME = Utils::parseDNSName(buf, &i);
-    printf("NAME: %s\n", res->NAME);
-
-    res->TYPE = (buf[i++] << 8) | buf[i++];
-    res->CLASS = (buf[i++] << 8) | buf[i++];
-
-    printf("TYPE: %hu\n", res->TYPE);
-    printf("CLASS: %hu\n", res->CLASS);
-
-    res->TTL = (buf[i++] << 24) | (buf[i++] << 16) | (buf[i++] << 8) | buf[i++];
-    res->RDLENGTH = (buf[i++] << 8) | buf[i++];
-    printf("TTL: %u\n", res->TTL);
-    printf("RDLENGTH: %hu\n", res->RDLENGTH);
-
-    res->RDATA = (uint8_t *)calloc(res->RDLENGTH, sizeof(uint8_t));
-    for (size_t j = 0; j < res->RDLENGTH; j++) res->RDATA[j] = buf[i++];
-    
-    char RDATA_str[res->RDLENGTH * 4 - 1];
-    for(size_t j = 0; j < res->RDLENGTH; j++)
+    for (size_t AN = 0; AN < res->ANCOUNT; AN++)
     {
-      char num_str[5];
-      snprintf(num_str, 5, "%u", res->RDATA[j]);
-      if(j <= res->RDLENGTH - 2) strcat(num_str, ".");
-      strcat(RDATA_str, num_str);
+      printf("\n\n----ANSWER %zu----\n", AN + 1);
+      DNSAnswer *an = new DNSAnswer();
+      an->NAME = Utils::parseDNSName(buf, &i);
+      printf("NAME: %s\n", res->NAME);
+
+      an->TYPE = (buf[i++] << 8) | buf[i++];
+      an->CLASS = (buf[i++] << 8) | buf[i++];
+
+      printf("TYPE: %hu\n", an->TYPE);
+      printf("CLASS: %hu\n", an->CLASS);
+
+      an->TTL = (buf[i++] << 24) | (buf[i++] << 16) | (buf[i++] << 8) | buf[i++];
+      an->RDLENGTH = (buf[i++] << 8) | buf[i++];
+      printf("TTL: %u\n", an->TTL);
+      printf("RDLENGTH: %hu\n", an->RDLENGTH);
+
+      char *RDATA_str;
+      uint16_t k = 0;
+
+      switch (an->TYPE)
+      {
+      case 1:
+      {
+        an->RDATA = (uint8_t *)calloc(an->RDLENGTH, sizeof(uint8_t));
+
+        for (uint16_t j = 0; j < an->RDLENGTH; j++, i++)
+          an->RDATA[j] = buf[i];
+
+        RDATA_str = (char *)calloc(an->RDLENGTH * 4, sizeof(char));
+
+        for (size_t j = 0; j < an->RDLENGTH; j++)
+        {
+          uint8_t datum = an->RDATA[j];
+
+          switch (datum / 100)
+          {
+          case 0:
+            switch (datum / 10)
+            {
+            case 0:
+              RDATA_str[k++] = digits[datum];
+              break;
+            default:
+              RDATA_str[k++] = digits[datum / 10];
+              RDATA_str[k++] = digits[datum % 10];
+              break;
+            }
+            break;
+          default:
+            RDATA_str[k++] = digits[datum / 100];
+            RDATA_str[k++] = digits[(datum % 100) / 10];
+            RDATA_str[k++] = digits[datum % 10];
+            break;
+          }
+
+          if (j < an->RDLENGTH - 1)
+            RDATA_str[k++] = '.';
+        }
+        RDATA_str[k] = '\0';
+        this->dstIPCount++;
+        this->dst_ipv4s = (char**)realloc(this->dst_ipv4s, sizeof(char*) * this->dstIPCount);
+        this->dst_ipv4s[dstIPCount - 1] = (char *) calloc(strlen(RDATA_str), sizeof(char));
+        strcat(this->dst_ipv4s[dstIPCount - 1], RDATA_str);
+        printf("this->dst_ipv4s[%zu]: %s\n", dstIPCount - 1, this->dst_ipv4s[dstIPCount - 1]);
+        this->dst_addrs = (uint32_t **)realloc(this->dst_addrs, sizeof(uint32_t) * this->dstIPCount);
+        puts("this->dst_addrs = (uint32_t **)realloc(this->dst_addrs, dstIPCount);");
+        this->dst_addrs[this->dstIPCount - 1] = (uint32_t*) malloc(sizeof(uint32_t));
+        *(this->dst_addrs[this->dstIPCount - 1]) = (uint32_t) (an->RDATA[0] << 24) | (an->RDATA[1] << 16) | (an->RDATA[2] << 8) | an->RDATA[3];
+        
+      }
+
+      break;
+
+      case 16:
+      {
+        an->RDATA = (uint8_t *)calloc(an->RDLENGTH, sizeof(uint8_t));
+
+        RDATA_str = (char *)calloc((size_t)an->RDLENGTH, sizeof(char));
+        while (k < an->RDLENGTH)
+          RDATA_str[k] = digits[an->RDATA[k++]];
+      }
+      break;
+      default:
+
+        RDATA_str = Utils::parseDNSName(buf, &i);
+
+        break;
+      }
+
+      printf("RDATA: %s\n\n", RDATA_str);
+      delete an;
+      free(RDATA_str);
     }
-    printf("RDATA: %s\n\n", RDATA_str);
+
     free(res->NAME);
     free(res->RDATA);
+
     delete res;
   }
 

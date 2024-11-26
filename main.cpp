@@ -66,8 +66,8 @@ extern "C"
 
     WS *finSock = new WS();
     finSock->setPort(53);
-    // finSock->init(R"(wss://ws.finnhub.io?token=csmi481r01qn12jet16gcsmi481r01qn12jet170)");
-    finSock->init(R"(http://google.com)");
+    finSock->init(R"(wss://ws.finnhub.io?token=csmi481r01qn12jet16gcsmi481r01qn12jet170)");
+    // finSock->init(R"(http://theage.com.au)");
 
     ws->await();
     delete ws;

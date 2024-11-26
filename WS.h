@@ -3,11 +3,20 @@
 
 extern "C"
 {
+  typedef struct {
+    char *NAME;
+    uint16_t TYPE;
+    uint16_t CLASS;
+    uint32_t TTL;
+    uint16_t RDLENGTH;
+    uint8_t *RDATA;
+  } DNSAnswer;
+
   typedef struct
   {
     uint16_t id;
     unsigned int QR;
-    unsigned int op;
+    unsigned int OPCODE;
     unsigned int AA;
     unsigned int TC;
     unsigned int RD;
@@ -26,8 +35,11 @@ extern "C"
     uint32_t TTL;
     uint16_t RDLENGTH;
     uint8_t *RDATA;
+    DNSAnswer *ANSWERS;
 
   } DNSMessage;
+
+  
 
   class WS;
   typedef void (*CB)(char *buf, WS *ws);
@@ -38,9 +50,11 @@ extern "C"
     int socket;
     int new_socket;
     long port;
+    size_t dstIPCount;
+    char **dst_ipv4s;
+    uint32_t **dst_addrs;
     struct sockaddr_in address;
     pthread_t _listen_thread;
-    // static void *_listen_thread_f(void *arg);
     static void *_listen(void *arg);
     void (*_cb)(char *buf, WS *ws);
     char *domain;
