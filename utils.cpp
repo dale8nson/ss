@@ -2,7 +2,9 @@
 #include <pcre2.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef __UTILS__
 #include "utils.h"
+#endif
 
 extern "C"
 {
@@ -22,7 +24,9 @@ extern "C"
 
     pcre2_match_data *data = pcre2_match_data_create_from_pattern(code, NULL);
 
-    int err = pcre2_match(code, (PCRE2_SPTR)subject, strlen(subject), 0, 0, data, NULL);
+    int result = pcre2_match(code, (PCRE2_SPTR)subject, strlen(subject), 0, 0, data, NULL);
+
+    if(!result) return NULL;
 
     PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(data);
 
@@ -61,5 +65,44 @@ extern "C"
     }
     name[k] = '\0';
     return name;
+  }
+
+  char *Utils::parseIPv4(void *addr)
+  {
+    char *IPv4 = (char *)calloc(16, sizeof(char));
+    size_t k = 0;
+
+    uint8_t *num = (uint8_t *)addr;
+
+    for (size_t i = 0; i < 4; i++)
+    {
+      uint8_t datum = num[i];
+      switch (datum / 100)
+      {
+      case 0:
+        switch (datum / 10)
+        {
+        case 0:
+          IPv4[k++] = digits[datum];
+          break;
+        default:
+          IPv4[k++] = digits[datum / 10];
+          IPv4[k++] = digits[datum % 10];
+          break;
+        }
+        break;
+      default:
+        IPv4[k++] = digits[datum / 100];
+        IPv4[k++] = digits[(datum % 100) / 10];
+        IPv4[k++] = digits[datum % 10];
+        break;
+      }
+
+      if (i < 3)
+        IPv4[k++] = '.';
+    }
+    IPv4[k] = '\0';
+
+    return IPv4;
   }
 }

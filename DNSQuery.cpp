@@ -1,8 +1,7 @@
 #include <cstdint>
 #include <sys/socket.h>
 #include <dns.h>
-#include "DNSMessage.h"
-#include "utils.h"
+#include "DNSQuery.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +11,6 @@ extern "C"
 
   DNSQuery::DNSQuery(const char *url)
   {
-    const char *digits = "0123456789";
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(53);
@@ -95,44 +93,15 @@ extern "C"
         for (uint16_t j = 0; j < an->RDLENGTH; j++, i++)
           an->RDATA[j] = buf[i];
 
-        RDATA_str = (char *)calloc(an->RDLENGTH * 4, sizeof(char));
-
-        for (size_t j = 0; j < an->RDLENGTH; j++)
-        {
-          uint8_t datum = an->RDATA[j];
-
-          switch (datum / 100)
-          {
-          case 0:
-            switch (datum / 10)
-            {
-            case 0:
-              RDATA_str[k++] = digits[datum];
-              break;
-            default:
-              RDATA_str[k++] = digits[datum / 10];
-              RDATA_str[k++] = digits[datum % 10];
-              break;
-            }
-            break;
-          default:
-            RDATA_str[k++] = digits[datum / 100];
-            RDATA_str[k++] = digits[(datum % 100) / 10];
-            RDATA_str[k++] = digits[datum % 10];
-            break;
-          }
-
-          if (j < an->RDLENGTH - 1)
-            RDATA_str[k++] = '.';
-        }
-        RDATA_str[k] = '\0';
+        RDATA_str = Utils::parseIPv4(an->RDATA);
+        
         dstIPCount++;
-        dst_ipv4s = (char**)realloc(dst_ipv4s, sizeof(char*) * dstIPCount);
-        dst_ipv4s[dstIPCount - 1] = (char *) calloc(strlen(RDATA_str), sizeof(char));
+        dst_ipv4s = (char **)realloc(dst_ipv4s, sizeof(char *) * dstIPCount);
+        dst_ipv4s[dstIPCount - 1] = (char *)calloc(strlen(RDATA_str), sizeof(char));
         strcat(dst_ipv4s[dstIPCount - 1], RDATA_str);
         dst_addrs = (uint32_t **)realloc(dst_addrs, sizeof(uint32_t) * dstIPCount);
-        dst_addrs[dstIPCount - 1] = (uint32_t*) malloc(sizeof(uint32_t));
-        *(dst_addrs[dstIPCount - 1]) = (uint32_t) (an->RDATA[0] << 24) | (an->RDATA[1] << 16) | (an->RDATA[2] << 8) | an->RDATA[3];
+        dst_addrs[dstIPCount - 1] = (uint32_t *)malloc(sizeof(uint32_t));
+        *(dst_addrs[dstIPCount - 1]) = (uint32_t)(an->RDATA[0] << 24) | (an->RDATA[1] << 16) | (an->RDATA[2] << 8) | an->RDATA[3];
       }
 
       break;
@@ -143,7 +112,7 @@ extern "C"
 
         RDATA_str = (char *)calloc((size_t)an->RDLENGTH, sizeof(char));
         while (k < an->RDLENGTH)
-          RDATA_str[k] = digits[an->RDATA[k++]];
+          RDATA_str[k] = Utils::digits[an->RDATA[k++]];
       }
       break;
       default:

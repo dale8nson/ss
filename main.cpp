@@ -12,13 +12,17 @@
 #include <pcre2.h>
 #include "WS.h"
 #include "Template.h"
+
+#ifndef __UTILS__
 #include "utils.h"
+#endif
 
 typedef void (*CB)(char *, WS *ws);
 
+
+
 extern "C"
 {
-  // char *reMatch(const char *, char *);
   void cb(char *buf, WS *ws);
   class WS;
 
@@ -33,7 +37,7 @@ extern "C"
 
     const char *pattern = "(?<=/)\\w+?(?=\\s)";
 
-    char *match = Utils::reMatch(pattern,(const char *) buf);
+    char *match = Utils::reMatch(pattern, (const char *)buf);
 
     printf("ovector: %s\n", match);
 
@@ -65,11 +69,11 @@ extern "C"
     ws->listen(cb);
 
     WS *finSock = new WS();
-    finSock->setPort(53);
+    finSock->setPort(3020);
     finSock->init(R"(wss://ws.finnhub.io?token=csmi481r01qn12jet16gcsmi481r01qn12jet170)");
-    // finSock->init(R"(http://theage.com.au)");
+    // finSock->init(R"(http://google.com)");
+    finSock->connect();
 
-    ws->await();
     delete ws;
     delete finSock;
     return 0;
