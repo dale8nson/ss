@@ -2,9 +2,11 @@
 #include <pcre2.h>
 #include <stdio.h>
 #include <string.h>
+// #include <sys/socket.h>
 #ifndef __UTILS__
 #include "utils.h"
 #endif
+#include <netdb.h>
 
 extern "C"
 {
@@ -26,7 +28,8 @@ extern "C"
 
     int result = pcre2_match(code, (PCRE2_SPTR)subject, strlen(subject), 0, 0, data, NULL);
 
-    if(!result) return NULL;
+    if (!result)
+      return NULL;
 
     PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(data);
 
@@ -104,5 +107,24 @@ extern "C"
     IPv4[k] = '\0';
 
     return IPv4;
+  }
+  struct addrinfo *Utils::getAddressInfo(const char *domain)
+  {
+    extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+    extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+
+    struct addrinfo *info;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    int err = getaddrinfo(domain, "443", &hints, &info);
+    if (err != 0)
+    {
+      printf("failed to obtain address information: %s\n", gai_strerror(err));
+    }
+
+    return info;
   }
 }

@@ -6,8 +6,7 @@
 #include <pthread.h>
 #include "utils.h"
 
-extern "C"
-{
+
 
   class WS
   {
@@ -49,4 +48,3 @@ extern "C"
     void setDestinationAddresses(uint32_t**addrs) { _dst_addrs = addrs; }
     struct sockaddr_in address() { return _address; }
   };
-}

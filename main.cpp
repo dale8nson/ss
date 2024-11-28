@@ -12,14 +12,10 @@
 #include <pcre2.h>
 #include "WS.h"
 #include "Template.h"
-
-#ifndef __UTILS__
 #include "utils.h"
-#endif
+
 
 typedef void (*CB)(char *, WS *ws);
-
-
 
 extern "C"
 {

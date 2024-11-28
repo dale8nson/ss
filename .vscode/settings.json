@@ -1,9 +1,10 @@
 {
-  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/gcc-14",
+  "C_Cpp.default.compilerPath": "/usr/bin/gcc",
   "files.associations": {
     "cerrno": "cpp",
     "cstdarg": "cpp",
     "cstdio": "cpp",
-    "cwchar": "cpp"
+    "cwchar": "cpp",
+    "functional": "cpp"
   }
 }

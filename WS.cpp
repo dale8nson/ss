@@ -9,10 +9,12 @@
 #include "DNSQuery.h"
 #include <cerrno>
 #include "WS.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 
 extern "C"
 {
-
   void *WS::_listen(void *args)
   {
     WS *self = (WS *)(args);
@@ -65,20 +67,23 @@ extern "C"
 
     return NULL;
   }
+}
 
-  void *WS::_send_async(void *arg)
-  {
-    return nullptr;
-  }
+void *WS::_send_async(void *arg)
+{
+  return nullptr;
+}
 
-  WS::WS() : _dstIPCount{0} {}
-  WS::~WS()
-  {
-    delete _dst_ipv4s;
-    delete _dst_addrs;
-    _await_all();
-  }
+WS::WS() : _dstIPCount{0} {}
+WS::~WS()
+{
+  delete _dst_ipv4s;
+  delete _dst_addrs;
+  _await_all();
+}
 
+extern "C"
+{
   void WS::init()
   {
     if (!_port)
@@ -87,12 +92,12 @@ extern "C"
       pthread_exit(nullptr);
     }
     extern int socket(int, int, int);
-    extern int setsockopt(int, int, int, const void *, socklen_t);
+    // extern int setsockopt(int, int, int, const void *, socklen_t);
 
     _address.sin_family = AF_INET;
     _address.sin_port = _port;
     _address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    _socket = socket(_address.sin_family, SOCK_STREAM, 0);
+    _socket = socket(AF_INET, SOCK_STREAM, 0);
 
     setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (void *)1, sizeof(int));
 
@@ -103,7 +108,10 @@ extern "C"
     }
     puts("Socket initialised");
   }
+}
 
+extern "C"
+{
   void WS::init(const char *url)
   {
     extern int socket(int, int, int);
@@ -113,11 +121,11 @@ extern "C"
     char *p = Utils::reMatch(R"((?<=:)\d{2,4})", url);
     printf("port: %s\n", p);
     size_t portNum = 0;
-    if(p) {
-      for(size_t i = 0; i < strlen(p); i++) 
+    if (p)
+    {
+      for (size_t i = 0; i < strlen(p); i++)
       {
         char c = p[i];
-        
       }
     }
     _query = Utils::reMatch(R"((?<=\?)(.+?$))", url);
@@ -129,8 +137,8 @@ extern "C"
     setDestinationAddresses(res->destinationAddresses());
     setDestinationIPs(res->destinationIPs());
     // setPort(htons(3020));
-    _dst_addr.sin_addr.s_addr = htonl(*_dst_ipv4s[0]);
-    _dst_addr.sin_family = AF_INET6;
+    _dst_addr.sin_addr.s_addr = htonl(*_dst_addrs[0]);
+    _dst_addr.sin_family = AF_INET;
     _dst_addr.sin_port = htons(443);
     _address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     _address.sin_family = AF_INET;
@@ -148,40 +156,124 @@ extern "C"
 
     delete res;
   }
+}
 
+extern "C"
+{
   void WS::connect()
   {
     extern ssize_t send(int sockfd, const void *buf, size_t len, int flags);
-    const char *requestFmt = "GET /%s HTTP/1.1\
-        Host: %s\
-        Upgrade: websocket\
-        Connection: Upgrade\
-        Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\
-        Sec-WebSocket-Protocol: chat, superchat\
-        Sec-WebSocket-Version: 13\n\n";
+    extern int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
-    struct addrinfo *info;
 
-    // printf("sizeof(*info): %lu\n", sizeof(*info));
+    struct addrinfo *info = Utils::getAddressInfo("ws.finnhub.io");
+    // const char *name_hint = "ws.finnhub.io";
+    // struct addrinfo hints;
+    // memset(&hints, 0, sizeof(hints));
+    // hints.ai_family = AF_UNSPEC;
+    // hints.ai_socktype = SOCK_STREAM;
 
-    if (int err = getaddrinfo("ws.finnhub.io", "http", NULL, &info) < 0)
+    // int err = getaddrinfo("ws.finnhub.io", "443", &hints, &info);
+    // if (err != 0)
+    // {
+    //   printf("failed to obtain address information: %s\n", gai_strerror(err));
+    // }
+
+    close(_socket);
+
+    _socket = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+
+    if (connect(_socket,(sockaddr *) &_dst_addr, info->ai_addrlen) < 0)
     {
-      printf("failed to obtain address information: %s\n", strerror(err));
+      printf("Failed to connect: %s.\n", strerror(errno));
+      close(_socket);
+      freeaddrinfo(info);
+      exit(EXIT_FAILURE);
     }
 
-    printf("family: %d\nname: %s\nprotocol:%d\nsocket:%d\n", info->ai_family, info->ai_canonname, info->ai_protocol, info->ai_socktype);
+    char queryString[strlen(_query) + 1];
+    queryString[0] = '?';
+    queryString[1] = '\0';
+    strcat(queryString, _query);
 
+    const char *requestFmt = "GET /%s HTTP/1.1\r\nHost: %s\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Protocol: chat, superchat\r\nSec-WebSocket-Version: 13\r\n\r\n";
 
-    char *requestStr = (char *)calloc(strlen(requestFmt) + strlen(_query) + strlen(_host), sizeof(char));
-    snprintf(requestStr, strlen(requestStr), requestFmt, _query, _host);
+    char requestStr[2048];
+    snprintf(requestStr, strlen(requestFmt) + strlen(queryString) + strlen(_host), requestFmt, queryString, _host);
 
-    if (ssize_t err = send(_socket, requestStr, strlen(requestStr), 0) < 0)
+    printf("requestStr:\n%s\n", requestStr);
+
+    SSL_library_init();
+    SSL_load_error_strings();
+    OpenSSL_add_ssl_algorithms();
+    const SSL_METHOD *method = TLS_client_method();
+    
+
+    SSL_CTX *ctx = SSL_CTX_new(method);
+    if (!ctx)
     {
-      printf("failed to establish connection: %s\n", gai_strerror(err));
+      perror("Unable to create ssl context.");
+      ERR_print_errors_fp(stderr);
+      exit(EXIT_FAILURE);
     }
 
-    free(requestStr);
+    SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
+    SSL *ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, _socket);
+
+    Utils::action abort = Utils::action([&]()->void {
+      ERR_print_errors_fp(stderr);
+      SSL_free(ssl);
+      close(_socket);
+      freeaddrinfo(info);
+      SSL_CTX_free(ctx);
+      exit(EXIT_FAILURE); });
+
+    if(!SSL_set_tlsext_host_name(ssl, "ws.finnhub.io")) abort();
+
+    if (SSL_connect(ssl) <= 0) abort();
+
+    ssize_t bytes_sent = SSL_write(ssl, requestStr, strlen(requestStr));
+    if (bytes_sent <= 0) abort();
+
+    char recv_buf[2048];
+    ssize_t bytes_received = SSL_read(ssl, recv_buf, sizeof(recv_buf) - 1);
+    if (bytes_received <= 0) abort();
+
+    printf("recv_buf:\n%s\n", recv_buf);
+
+    char *socket_url = Utils::reMatch(R"(https:\\/\\/.+?(?="\}\]))", recv_buf);
+
+    printf("socket_url: %s\n", socket_url);
+
+    char *host = Utils::reMatch(R"((?<=https:\\/\\/)(\.?[\w\d])+?(?=\\/))", socket_url);
+
+    printf("host: %s\n", host);
+
+    const char *conn_str_fmt = "CONNECT %s HTTP/1.1\r\nHost: %s\r\n\r\n";
+    char conn_str[2048];
+    snprintf(conn_str,strlen(conn_str_fmt) + strlen(socket_url) + strlen(host), conn_str_fmt, socket_url, host);
+
+    printf("conn_str: %s\n", conn_str);
+
+    bytes_sent = SSL_write(ssl, conn_str, strlen(conn_str));
+    if (bytes_sent <= 0) abort();
+
+    bytes_received = SSL_read(ssl, recv_buf, sizeof(recv_buf) - 1);
+    if (bytes_received <= 0) abort();
+
+    printf("recv_buf:\n%s\n", recv_buf);
+
+    SSL_free(ssl);
+    close(_socket);
+    freeaddrinfo(info);
+    SSL_CTX_free(ctx);
+    EVP_cleanup();
   }
+}
+extern "C"
+{
   void WS::listen(void (*cb)(char *buf, WS *ws))
   {
     _listen_cb = cb;
@@ -197,11 +289,14 @@ extern "C"
     }
     _threads[_thread_count++] = thread;
   }
+}
 
-  void WS::sendAsync(char *buf)
-  {
-  }
+void WS::sendAsync(char *buf)
+{
+}
 
+extern "C"
+{
   void WS::_await_all()
   {
     for (size_t i = 0; i < _thread_count; i++)
@@ -214,7 +309,10 @@ extern "C"
       free(_threads[i]);
     }
   }
+}
 
+extern "C"
+{
   void WS::send(char *msg)
   {
     extern ssize_t send(int, const void *, size_t, int);
