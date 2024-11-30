@@ -58,8 +58,8 @@ extern "C"
     NAME = Utils::parseDNSName(buf, &i);
     printf("NAME: %s\n", NAME);
 
-    QTYPE = (buf[i++] << 8) | buf[i++];
-    QCLASS = (buf[i++] << 8) | buf[i++];
+    QTYPE = (buf[i] << 8) | buf[i + 1]; i += 2;
+    QCLASS = (buf[i] << 8) | buf[i + 1]; i += 2;
     printf("QTYPE: %hu\n", QTYPE);
     printf("QCLASS: %hu\n", QCLASS);
 
@@ -70,14 +70,14 @@ extern "C"
       an->NAME = Utils::parseDNSName(buf, &i);
       printf("NAME: %s\n", NAME);
 
-      an->TYPE = (buf[i++] << 8) | buf[i++];
-      an->CLASS = (buf[i++] << 8) | buf[i++];
+      an->TYPE = (buf[i] << 8) | buf[i + 1]; i += 2;
+      an->CLASS = (buf[i] << 8) | buf[i + 1]; i += 2;
 
       printf("TYPE: %hu\n", an->TYPE);
       printf("CLASS: %hu\n", an->CLASS);
 
-      an->TTL = (buf[i++] << 24) | (buf[i++] << 16) | (buf[i++] << 8) | buf[i++];
-      an->RDLENGTH = (buf[i++] << 8) | buf[i++];
+      an->TTL = (buf[i] << 24) | (buf[i + 1] << 16) | (buf[i + 2] << 8) | buf[i + 3]; i += 4;
+      an->RDLENGTH = (buf[i] << 8) | buf[i + 1]; i += 2;
       printf("TTL: %u\n", an->TTL);
       printf("RDLENGTH: %hu\n", an->RDLENGTH);
 
@@ -112,7 +112,7 @@ extern "C"
 
         RDATA_str = (char *)calloc((size_t)an->RDLENGTH, sizeof(char));
         while (k < an->RDLENGTH)
-          RDATA_str[k] = Utils::digits[an->RDATA[k++]];
+          RDATA_str[k] = Utils::digits[an->RDATA[k]]; k++;
       }
       break;
       default:

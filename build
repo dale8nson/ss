@@ -1,5 +1,5 @@
 #!sh 
-gcc -std=c++11 -I/opt/homebrew/include -L/opt/homebrew/lib  -o ss -lc++ -lc -lcurl -lpcre2-8 -lresolv -lssl -lcrypto main.cpp WS.cpp utils.cpp Template.cpp DNSQuery.cpp map.cpp
+gcc -std=c++11 -I/opt/homebrew/include -L/opt/homebrew/lib  -o ss -lc++ -lc -lcurl -lpcre2-8 -lresolv -lssl -lcrypto main.cpp WS.cpp utils.cpp Template.cpp DNSQuery.cpp Headers.cpp
 
 
 

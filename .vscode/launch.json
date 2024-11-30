@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(lldb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/Users/dale8nson/dev/ss/ss",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "/Users/dale8nson/dev/ss",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb"
+    },
+    {
+      "name": "(lldb) Attach",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "/Users/dale8nson/dev/ss/ss",
+      "MIMode": "lldb"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/dale8nson/dev/ss",
+      "program": "/Users/dale8nson/dev/ss/build/Debug/outDebug"
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 #pragma once
 #ifndef __WS__
 #define __WS__
-#endif
+
 #include <netinet/in.h>
 #include <pthread.h>
 #include "utils.h"
+// #ifndef __MAP__
+#include "map.h"
+// #endif
 
 
 
@@ -48,3 +51,6 @@
     void setDestinationAddresses(uint32_t**addrs) { _dst_addrs = addrs; }
     struct sockaddr_in address() { return _address; }
   };
+
+
+#endif

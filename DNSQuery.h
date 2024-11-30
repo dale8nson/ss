@@ -2,9 +2,7 @@
 #define __DNSQUERY__
 #include <cstdint>
 #include "WS.h"
-#ifndef __UTILS__
 #include "utils.h"
-#endif
 
 extern "C"
 {

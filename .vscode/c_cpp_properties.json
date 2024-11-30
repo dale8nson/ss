@@ -1,17 +1,40 @@
 {
     "configurations": [
         {
-            "name": "Mac",
+            "name": "macos-clang-arm64",
             "includePath": [
-                "${default}"
+                "${workspaceFolder}/**",
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/include",
+                "/opt/homebrew/include"
             ],
             "defines": [],
             "macFrameworkPath": [
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
             ],
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "macos-clang-arm64"
+            "cStandard": "${default}",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "macos-clang-arm64",
+            "compilerPath": "/usr/bin/g++",
+            "compilerArgs": [
+                "-I/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/include",
+                "-I/opt/homebrew/include",
+                "-L/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/lib",
+                "-L/opt/homebrew/lib  ",
+                "-o ss ",
+                "-lc++ ",
+                "-lc ",
+                "-lcurl ",
+                "-lpcre2-8 ",
+                "-lresolv ",
+                "-lssl ",
+                "-lcrypto ",
+                "main.cpp ",
+                "WS.cpp ",
+                "utils.cpp ",
+                "Template.cpp ",
+                "DNSQuery.cpp ",
+                "Headers.cpp"
+            ]
         }
     ],
     "version": 4
